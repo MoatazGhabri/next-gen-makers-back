@@ -5,9 +5,15 @@ const nodemailer = require("nodemailer");
 
 // server used to send send emails
 const app = express();
-app.use(cors());
-app.use(express.json());
-app.use("/", router);
+  const corsOptions = {
+    origin: process.env.REACT_APP_DOMAIN, // Use the environment variable
+    optionsSuccessStatus: 200, // Some legacy browsers (IE11, various SmartTVs) choke on 204
+  };
+  
+  // Enable CORS for all routes
+  app.use(cors(corsOptions));
+app.options('*', cors());
+app.use(bodyParser.json());
 app.listen(5000, () => console.log("Server Running"));
 console.log(process.env.EMAIL_USER);
 console.log(process.env.EMAIL_PASS);
@@ -28,7 +34,7 @@ contactEmail.verify((error) => {
   }
 });
 
-router.post("/contact", (req, res) => {
+app.post("/contact", (req, res) => {
   const name = req.body.firstName;
   const lastName = req.body.lastName;
   const email = req.body.email;
