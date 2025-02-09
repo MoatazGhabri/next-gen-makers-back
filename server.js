@@ -2,19 +2,13 @@ const express = require("express");
 const router = express.Router();
 const cors = require("cors");
 const nodemailer = require("nodemailer");
-const bodyParser = require('body-parser');
 
 // server used to send send emails
 const app = express();
-  const corsOptions = {
-    origin: process.env.REACT_APP_DOMAIN, // Use the environment variable
-    optionsSuccessStatus: 200, // Some legacy browsers (IE11, various SmartTVs) choke on 204
-  };
-  
-  // Enable CORS for all routes
-  app.use(cors(corsOptions));
-app.options('*', cors());
-app.use(bodyParser.json());
+app.use(cors());
+app.use(express.json());
+app.use("/", router);
+
 app.listen(5000, () => console.log("Server Running"));
 console.log(process.env.EMAIL_USER);
 console.log(process.env.EMAIL_PASS);
