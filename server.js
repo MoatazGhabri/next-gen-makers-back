@@ -1,81 +1,76 @@
 const express = require("express");
+const router = express.Router();
 const cors = require("cors");
 const nodemailer = require("nodemailer");
 
+// server used to send send emails
 const app = express();
-const PORT = 5000;
 
-// Allowed origins for CORS
-const allowedOrigins = ["https://next-gen-makers.onrender.com"];
+// Configure CORS
+const corsOptions = {
+  origin: ["http://localhost:3000", "https://next-gen-makers.onrender.com"], // Add all allowed origins here
+  methods: "GET,POST",
+  allowedHeaders: ["Content-Type"],
+};
 
-// Middleware
-app.use(
-  cors({
-    origin: allowedOrigins,
-    methods: ["GET", "POST", "OPTIONS"],
-    credentials: true,
-  })
-);
+app.use(cors(corsOptions));
 app.use(express.json());
+app.use("/", router);
 
-// Nodemailer Transport Configuration
+app.listen(5000, () => console.log("Server Running"));
+console.log(process.env.EMAIL_USER);
+console.log(process.env.EMAIL_PASS);
+
 const contactEmail = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: process.env.EMAIL_USER || "moatazghabri@gmail.com", // Use environment variable or fallback
-    pass: process.env.EMAIL_PASS || "dqkkbjwvpugivxen",       // Use environment variable or fallback
+    user: "moatazghabri@gmail.com",
+    pass: "dqkkbjwvpugivxen",
   },
 });
 
-// Verify Email Transporter
 contactEmail.verify((error) => {
   if (error) {
-    console.error("Email verification error:", error);
+    console.log(error);
   } else {
-    console.log("Ready to Send Emails");
+    console.log("Ready to Send");
   }
 });
 
-// Contact Route
-app.post("/contact", (req, res) => {
-  const { firstName, lastName, email, phone, message } = req.body;
-
-  if (!firstName || !lastName || !email || !message) {
-    return res.status(400).json({ error: "All fields are required" });
-  }
-
+router.post("/contact", (req, res) => {
+  const name = req.body.firstName;
+  const lastName = req.body.lastName;
+  const email = req.body.email;
+  const message = req.body.message;
+  const phone = req.body.phone;
   const mail = {
-    from: `${firstName} ${lastName} <${email}>`,
-    to: process.env.EMAIL_USER || "moatazghabri@gmail.com",
-    subject: `Nouveau message de ${firstName} ${lastName}`,
-    html: `
-      <div style="max-width: 600px; margin: 0 auto; border: 2px solid #3498db; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
-        <h2 style="color: #3498db; text-align: center; padding: 10px; border-radius: 5px;">Nouveau Message</h2>
-        <p><strong>Nom:</strong> ${firstName}</p>
-        <p><strong>Prénom:</strong> ${lastName}</p>
-        <p><strong>Email:</strong> ${email}</p>
-        <p><strong>Téléphone:</strong> ${phone || "N/A"}</p>
-        <p><strong>Message:</strong><br>${message}</p>
-        <h2 style="background-color: #3498db; color: white; text-align: center; padding: 10px; border-radius: 5px;">© NGM</h2>
-      </div>
-    `,
+    from: name,
+    to: "moatazghabri@gmail.com",
+    subject: `Nouveau message de ${name} ${lastName}`,
+    html: ` <div style=" max-width: 600px;
+       margin: 0 auto; border: 2px solid #3498db; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
+      <h2 style="color: #3498db;
+      text-align: center;
+      padding: 10px;
+      border-radius: 5px;">Nouveau Message</h2>
+      <p><strong>Nom:</strong> ${name}</p>
+      <p><strong>Prenom:</strong> ${lastName}</p>
+      <p><strong>E-mail:</strong> ${email}</p>
+      <p><strong>Phone:</strong> ${phone}</p>
+      <p><strong>Message:</strong><br> ${message}</p>
+      <h2 style=" background-color: #3498db;
+      color: white;
+      text-align: center;
+      padding: 10px;
+      border-radius: 5px;">  © NGM</h2>
+    </div>
+  `,
   };
-
   contactEmail.sendMail(mail, (error) => {
     if (error) {
-      console.error("Error sending email:", error);
-      return res.status(500).json({ error: "Failed to send the message" });
+      res.json(error);
+    } else {
+      res.json({ code: 200, status: "Message Sent" });
     }
-    res.status(200).json({ message: "Message sent successfully" });
   });
-});
-
-// Default Route
-app.get("/", (req, res) => {
-  res.send("Email server is running");
-});
-
-// Start Server
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
 });
